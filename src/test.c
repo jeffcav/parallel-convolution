@@ -3,11 +3,13 @@
 #include "include/conv.h"
 #include "include/bmp.h"
 
+char src_file[] = "images/lena.bmp";
+
 int main(int argc, char *argv[]) {
+/*
 	int err;
 	char *image;
 	struct BMPImage img;
-	char src_file[] = "images/lena_gray.bmp";
 	char dst_file[] = "images/lena_gray2.bmp";
 
 	load_bmp(src_file, &img);
@@ -20,7 +22,7 @@ int main(int argc, char *argv[]) {
 		printf("Could not save BMP: %d\n", err);
 
 	free(img.data);
-
+*/
 	return 0;
 }
 

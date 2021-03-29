@@ -3,160 +3,131 @@
 #include <byteswap.h>
 #include "include/bmp.h"
 
-void print_bmp_header(struct BMPHeader *hdr) {
-    printf("type: 0x%x\n", hdr->type);
-    printf("size: 0x%x\n", hdr->size);
-    printf("offset: 0x%x\n", hdr->offset);
-    printf("DIB HDR size: 0x%x\n", hdr->dib_header_size);
-    printf("width: 0x%x\n", hdr->width_px);
-    printf("height: 0x%x\n", hdr->height_px);
-    printf("num_planes: 0x%x\n", hdr->num_planes);
-    printf("bits_per_pixel: 0x%x\n", hdr->bits_per_pixel);
-    printf("compression: 0x%x\n", hdr->compression);
-    printf("image_size_bytes: 0x%x\n", hdr->image_size_bytes);
-    printf("x_resolution_ppm: 0x%x\n", hdr->x_resolution_ppm);
-    printf("y_resolution_ppm: 0x%x\n", hdr->y_resolution_ppm);
-    printf("num_colors: 0x%x\n", hdr->num_colors);
-    printf("important_colors: 0x%x\n\n", hdr->important_colors);
+void bmp_describe(const struct bmp_image *img) {
+    printf("type: 0x%x\n",              img->header.type);
+    printf("size: 0x%x\n",              img->header.size);
+    printf("offset: 0x%x\n",            img->header.offset);
+    printf("DIB HDR size: 0x%x\n",      img->header.header_size);
+    printf("width: 0x%x\n",             img->header.width);
+    printf("height: 0x%x\n",            img->header.height);
+    printf("num_planes: 0x%x\n",        img->header.planes);
+    printf("bits_per_pixel: 0x%x\n",    img->header.bits);
+    printf("compression: 0x%x\n",       img->header.compression);
+    printf("image_size_bytes: 0x%x\n",  img->header.imagesize);
+    printf("x_resolution_ppm: 0x%x\n",  img->header.xresolution);
+    printf("y_resolution_ppm: 0x%x\n",  img->header.yresolution);
+    printf("num_colors: 0x%x\n",        img->header.num_colors);
+    printf("important_colors: 0x%x\n\n",img->header.important_colors);
 }
 
-static int load_bmp_header(FILE *fp, struct BMPHeader *hdr) {
-    if (fread(&hdr->type, sizeof(hdr->type), 1, fp) < 1)
-        return -1;
-
-    if (fread(&hdr->size, sizeof(hdr->size), 1, fp) < 1)
-        return -2;
-
-    if (fread(&hdr->reserved1, sizeof(hdr->reserved1), 1, fp) < 1)
-        return -3;
-
-    if (fread(&hdr->reserved2, sizeof(hdr->reserved2), 1, fp) < 1)
-        return -4;
-
-    if (fread(&hdr->offset, sizeof(hdr->offset), 1, fp) < 1)
-        return -5;
-
-    if (fread(&hdr->dib_header_size, sizeof(hdr->dib_header_size), 1, fp) < 1)
-        return -6;
-
-    if (fread(&hdr->width_px, sizeof(hdr->width_px), 1, fp) < 1)
-        return -7;
-
-    if (fread(&hdr->height_px, sizeof(hdr->width_px), 1, fp) < 1)
-        return -8;
-
-    if (fread(&hdr->num_planes, sizeof(hdr->num_planes), 1, fp) < 1)
-        return -9;
-
-    if (fread(&hdr->bits_per_pixel, sizeof(hdr->bits_per_pixel), 1, fp) < 1)
-        return -10;
-
-    if (fread(&hdr->compression, sizeof(hdr->compression), 1, fp) < 1)
-        return -11;
-
-    if (fread(&hdr->image_size_bytes, sizeof(hdr->image_size_bytes), 1, fp) < 1)
-        return -12;
-
-    if (fread(&hdr->x_resolution_ppm, sizeof(hdr->x_resolution_ppm), 1, fp) < 1)
-        return -13;
-
-    if (fread(&hdr->y_resolution_ppm, sizeof(hdr->y_resolution_ppm), 1, fp) < 1)
-        return -14;
-
-    if (fread(&hdr->num_colors, sizeof(hdr->num_colors), 1, fp) < 1)
-        return -15;
-
-    if (fread(&hdr->important_colors, sizeof(hdr->important_colors), 1, fp) < 1)
-        return -16;
-
-    return 0;
-}
-
-static int save_bmp_header(FILE *fp, struct BMPHeader *hdr) {
-    if (fwrite(&hdr->type, sizeof(hdr->type), 1, fp) < 1)
-        return -1;
-
-    if (fwrite(&hdr->size, sizeof(hdr->size), 1, fp) < 1)
-        return -2;
-
-    if (fwrite(&hdr->reserved1, sizeof(hdr->reserved1), 1, fp) < 1)
-        return -3;
-
-    if (fwrite(&hdr->reserved2, sizeof(hdr->reserved2), 1, fp) < 1)
-        return -4;
-
-    if (fwrite(&hdr->offset, sizeof(hdr->offset), 1, fp) < 1)
-        return -5;
-
-    if (fwrite(&hdr->dib_header_size, sizeof(hdr->dib_header_size), 1, fp) < 1)
-        return -6;
-
-    if (fwrite(&hdr->width_px, sizeof(hdr->width_px), 1, fp) < 1)
-        return -7;
-
-    if (fwrite(&hdr->height_px, sizeof(hdr->width_px), 1, fp) < 1)
-        return -8;
-
-    if (fwrite(&hdr->num_planes, sizeof(hdr->num_planes), 1, fp) < 1)
-        return -9;
-
-    if (fwrite(&hdr->bits_per_pixel, sizeof(hdr->bits_per_pixel), 1, fp) < 1)
-        return -10;
-
-    if (fwrite(&hdr->compression, sizeof(hdr->compression), 1, fp) < 1)
-        return -11;
-
-    if (fwrite(&hdr->image_size_bytes, sizeof(hdr->image_size_bytes), 1, fp) < 1)
-        return -12;
-
-    if (fwrite(&hdr->x_resolution_ppm, sizeof(hdr->x_resolution_ppm), 1, fp) < 1)
-        return -13;
-
-    if (fwrite(&hdr->y_resolution_ppm, sizeof(hdr->y_resolution_ppm), 1, fp) < 1)
-        return -14;
-
-    if (fwrite(&hdr->num_colors, sizeof(hdr->num_colors), 1, fp) < 1)
-        return -15;
-
-    if (fwrite(&hdr->important_colors, sizeof(hdr->important_colors), 1, fp) < 1)
-        return -16;
-
-    return 0;
-}
-
-static void load_bmp_data(FILE *fp, struct BMPImage *img) {
-    int bytes_read, row_size, row_padding_size, i;
-    char *row, padding[4];
+/*
+static void load_padded_bmp_data(FILE *fp, struct BMPImage *img, int padding) {
+    int bytes_read, row_size, row_bmp_padding_size, i, offset, step;
+    char *row, bmp_padding[4];
 
     row_size = img->header.width_px * img->header.num_planes;
-    row_padding_size = row_size % 4;
+    row_bmp_padding_size = row_size % 4;
+
+    step = row_size + (2 * padding);
+    if (padding)
+        offset = padding * step + 1;
+    else
+        offset = 0;
 
     for (i = 0; i < img->header.height_px; i++) {
-        bytes_read = fread(&img->data[i * row_size], row_size, 1, fp);
+        printf("Load offset = %d, step = %d\n", offset, step);
 
-        if (row_padding_size)
-            bytes_read = fread(padding, row_padding_size, 1, fp);
+        bytes_read = fread(&img->data[offset], row_size, 1, fp);
+
+        if (row_bmp_padding_size) {
+            printf("Reading %d bytes of padding\n", row_bmp_padding_size);
+
+            bytes_read = fread(bmp_padding, row_bmp_padding_size, 1, fp);
+        }
+
+        offset += step;
     }
 }
+*/
 
-static void save_bmp_data(FILE *fp, struct BMPImage *img) {
-    int bytes_written, row_size, row_padding_size, i;
-    char *row, padding[4] = {0, 0, 0, 0};
-
-    row_size = img->header.width_px * img->header.num_planes;
-    row_padding_size = row_size % 4;
-
-    for (i = 0; i < img->header.height_px; i++) {
-        bytes_written = fwrite(&img->data[i * row_size], row_size, 1, fp);
-
-        if (row_padding_size)
-            bytes_written = fwrite(padding, row_padding_size, 1, fp);
-    }
-}
-
-int load_bmp(char *path, struct BMPImage *img) {
+ struct bmp_image *bmp_load(const char *filepath) {
     FILE *fp;
-    int read_size, err;
+    char onebyte;
+    int data_size;
+    struct bmp_image *img = NULL;
+
+    fp = fopen(filepath, "rb");
+    if (fp == NULL) {
+        printf("Could not open %s\n", filepath);
+        return NULL;
+    }
+
+    img = malloc(sizeof(struct bmp_image));
+
+    if (fread(&img->header, sizeof(struct bmp_header), 1, fp) != 1) {
+        printf("Could not read header from %s\n", filepath);
+        free(img);
+        return NULL;
+    }
+
+    data_size = img->header.size - sizeof(struct bmp_header);
+    img->data = malloc(sizeof(unsigned char) * data_size);
+
+    if (fread(img->data, sizeof(char), data_size, fp) != data_size) {
+        printf("Failed reading image data from %s\n", filepath);
+        free(img->data);
+        free(img);
+        return NULL;
+    }
+
+    if (fread(&onebyte, sizeof(char), 1, fp) != 0) {
+        printf("Failed reading image from %s: EOF not reached\n", filepath);
+        free(img->data);
+        free(img);
+        return NULL;
+    }
+
+    fclose(fp);
+    return img;
+}
+
+int bmp_save(const struct bmp_image *img, const char *filepath) {
+    FILE *fp = NULL;
+    int data_size;
+
+    fp = fopen(filepath, "wb");
+    if (fp == NULL) {
+        printf("Could not open %s\n", filepath);
+        return 0;
+    }
+
+    // write the header first
+    if (fwrite(&(img->header), sizeof(struct bmp_header), 1, fp) != 1) {
+        printf("Could not write header in %s\n", filepath);
+        fclose(fp);
+        return 0;
+    }
+
+    data_size = img->header.size - sizeof(struct bmp_header);
+    if (fwrite(img->data, sizeof(char), data_size, fp) != data_size) {
+        printf("Could not write image data in %s\n", filepath);
+        fclose(fp);
+        return 0;
+    }
+
+    fclose (fp);
+    return 1;
+}
+
+void bmp_destroy(struct bmp_image *img) {
+    free(img->data);
+    free(img);
+}
+
+int load_padded_bmp(char *path, struct BMPImage *img, int padding) {
+/*
+    FILE *fp;
+    int read_size, num_pads, err;
 
     fp = fopen(path, "rb");
     if (fp == NULL) {
@@ -170,31 +141,19 @@ int load_bmp(char *path, struct BMPImage *img) {
         return -2;
     }
 
-    img->data = malloc(img->header.width_px * img->header.height_px * img->header.num_planes);
-    load_bmp_data(fp, img);
+    num_pads = ((2 * img->header.width_px) + (4 * padding)) + (2 * img->header.height_px);
+    printf("Size: %d\n", (img->header.width_px * img->header.height_px * img->header.num_planes) + num_pads);
+
+    img->data = calloc((img->header.width_px * img->header.height_px * img->header.num_planes) + num_pads, 1);
+    load_padded_bmp_data(fp, img, padding);
+
+    img->header.width_px += (padding*2);
+    img->header.height_px += (padding*2);
+
+    printf("Size=%d W=%d H=%d Paddings=%d\n\n", (img->header.width_px * img->header.height_px * img->header.num_planes), img->header.width_px, img->header.height_px, num_pads);
 
     fclose(fp);
+*/
     return 0;
 }
 
-int save_bmp(char *path, struct BMPImage *img) {
-    FILE *fp;
-    int read_size, err;
-
-    fp = fopen(path, "wb");
-    if (fp == NULL) {
-        printf("Could not open %s\n", path);
-        return -1;
-    }
-
-    err = save_bmp_header(fp, &img->header);
-    if (err) {
-        printf("Error %d reading BMP header\n", err);
-        return -2;
-    }
-
-    save_bmp_data(fp, img);
-
-    fclose(fp);
-    return 0;
-}
