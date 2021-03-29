@@ -6,21 +6,20 @@
 int main(int argc, char *argv[]) {
 	int err;
 	char *image;
-	struct BMPHeader hdr;
-	char filename[] = "images/lena_gray.bmp";
+	struct BMPImage img;
+	char src_file[] = "images/lena_gray.bmp";
+	char dst_file[] = "images/lena_gray2.bmp";
 
-	char copy_filename[] = "images/lena_gray2.bmp";
+	load_bmp(src_file, &img);
 
-	image = load_bmp(filename, &hdr);
+	printf("-- %s --\n", src_file);
+	print_bmp_header(&img.header);
 
-	printf("-- %s --\n", filename);
-	print_bmp_header(&hdr);
-
-	err = save_bmp(copy_filename, &hdr, image);
+	err = save_bmp(dst_file, &img);
 	if (err)
 		printf("Could not save BMP: %d\n", err);
 
-	free(image);
+	free(img.data);
 
 	return 0;
 }

@@ -124,61 +124,60 @@ static int save_bmp_header(FILE *fp, struct BMPHeader *hdr) {
     return 0;
 }
 
-static void load_bmp_data(FILE *fp, struct BMPHeader *hdr, char *image) {
+static void load_bmp_data(FILE *fp, struct BMPImage *img) {
     int bytes_read, row_size, row_padding_size, i;
     char *row, padding[4];
 
-    row_size = hdr->width_px * hdr->num_planes;
+    row_size = img->header.width_px * img->header.num_planes;
     row_padding_size = row_size % 4;
 
-    for (i = 0; i < hdr->height_px; i++) {
-        bytes_read = fread(&image[i * row_size], row_size, 1, fp);
+    for (i = 0; i < img->header.height_px; i++) {
+        bytes_read = fread(&img->data[i * row_size], row_size, 1, fp);
 
         if (row_padding_size)
             bytes_read = fread(padding, row_padding_size, 1, fp);
     }
 }
 
-static void save_bmp_data(FILE *fp, struct BMPHeader *hdr, char *image) {
+static void save_bmp_data(FILE *fp, struct BMPImage *img) {
     int bytes_written, row_size, row_padding_size, i;
     char *row, padding[4] = {0, 0, 0, 0};
 
-    row_size = hdr->width_px * hdr->num_planes;
+    row_size = img->header.width_px * img->header.num_planes;
     row_padding_size = row_size % 4;
 
-    for (i = 0; i < hdr->height_px; i++) {
-        bytes_written = fwrite(&image[i * row_size], row_size, 1, fp);
+    for (i = 0; i < img->header.height_px; i++) {
+        bytes_written = fwrite(&img->data[i * row_size], row_size, 1, fp);
 
         if (row_padding_size)
             bytes_written = fwrite(padding, row_padding_size, 1, fp);
     }
 }
 
-char *load_bmp(char *path, struct BMPHeader *hdr) {
+int load_bmp(char *path, struct BMPImage *img) {
     FILE *fp;
-    char *image;
     int read_size, err;
 
     fp = fopen(path, "rb");
     if (fp == NULL) {
         printf("Could not open %s\n", path);
-        return NULL;
+        return -1;
     }
 
-    err = load_bmp_header(fp, hdr);
+    err = load_bmp_header(fp, &img->header);
     if (err) {
         printf("Error %d reading BMP header\n", err);
-        return NULL;
+        return -2;
     }
 
-    image = malloc(hdr->width_px * hdr->height_px * hdr->num_planes);
-    load_bmp_data(fp, hdr, image);
+    img->data = malloc(img->header.width_px * img->header.height_px * img->header.num_planes);
+    load_bmp_data(fp, img);
 
     fclose(fp);
-    return image;
+    return 0;
 }
 
-int save_bmp(char *path, struct BMPHeader *hdr, char *image) {
+int save_bmp(char *path, struct BMPImage *img) {
     FILE *fp;
     int read_size, err;
 
@@ -188,13 +187,13 @@ int save_bmp(char *path, struct BMPHeader *hdr, char *image) {
         return -1;
     }
 
-    err = save_bmp_header(fp, hdr);
+    err = save_bmp_header(fp, &img->header);
     if (err) {
         printf("Error %d reading BMP header\n", err);
         return -2;
     }
 
-    save_bmp_data(fp, hdr, image);
+    save_bmp_data(fp, img);
 
     fclose(fp);
     return 0;

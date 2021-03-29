@@ -26,6 +26,6 @@ static char **walk(char **image, int row_padding, int steps) {
 	return NULL;
 }
 
-char **conv2D(char **image, float **kernel, int n) {
-	return NULL;
+char *conv2D(char *image, float *kernel, int n) {
+	int i, j;
 }

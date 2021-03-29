@@ -30,12 +30,12 @@ struct BMPImage {
 /**
  * @brief Loads a BMP file to a 2D array.
  */
-char *load_bmp(char *path, struct BMPHeader *hdr);
+int load_bmp(char *path, struct BMPImage *img);
 
 /**
  * @brief Saves a 2D array to a BMP file (.bmp).
  */
-int save_bmp(char *path, struct BMPHeader *hdr, char *image);
+int save_bmp(char *path, struct BMPImage *img);
 
 /**
  * @brief Prints the contents of a BMP header.
