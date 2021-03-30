@@ -80,6 +80,17 @@ struct bmp_image *bmp_create(int width, int height, int nchannels) {
     return img;
 }
 
+struct raw_image *raw_create(int width, int height, int nchannels) {
+    struct raw_image *img = calloc(sizeof(struct raw_image), 1);
+
+    img->data = malloc(width * height * nchannels);
+    img->width = width;
+    img->height = height;
+    img->nchannels = nchannels;
+
+    return img;
+}
+
  struct bmp_image *bmp_load(const char *filepath) {
     FILE *fp;
     int data_size;

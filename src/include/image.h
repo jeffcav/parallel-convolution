@@ -63,4 +63,6 @@ struct bmp_image *raw2bmp(struct raw_image *raw);
 
 struct raw_image *bmp2raw(struct bmp_image *bmp);
 
+struct raw_image *raw_create(int width, int height, int nchannels);
+
 #endif
