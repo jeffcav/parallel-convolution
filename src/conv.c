@@ -32,8 +32,8 @@ struct bmp_image *conv_2d(struct bmp_image *img, char *kernel, int n) {
 	out->header.size -= diff_size;
 	out->data = malloc(out->header.size - sizeof(struct bmp_header));
 
-	for (row = 0; row < out->header.width; row++) {
-		for (col = 0; col < out->header.height; col++) {
+	for (row = 0; row < out->header.height; row++) {
+		for (col = 0; col < out->header.width; col++) {
 			int in_offset, out_offset;
 
 			in_offset = (row * img->header.width) + col;
