@@ -5,75 +5,120 @@
 #include "include/conv.h"
 #include "include/bmp.h"
 
-#define SRCFILE "images/lena.bmp"
-#define DSTFILE "images/out/serial_lena_conv.bmp"
+void propagate_img_dimensions(int *num_rows, int *num_cols) {
+	int data[2] = {(*num_rows), (*num_cols)};
+	MPI_Bcast(data, 2, MPI_INT, 0, MPI_COMM_WORLD);
 
-/*
-void conv(const char *src, const char *dst) {
-	char identity_kernel[9] = {0, 0, 0, 0, 1, 0, 0, 0, 0};
-	int n = 3;
-	struct bmp_image *img, *out;
-
-	img = bmp_load(src);
-	out = conv_2d(img, identity, n);
-	bmp_save(out, dst);
-
-	bmp_destroy(img);
-	bmp_destroy(out);
+	(*num_rows) = data[0];
+	(*num_cols) = data[1];
 }
-*/
 
-void run_dispatcher(const char *filepath, int rank, int world_size) {
-	struct bmp_image *img, *out, tmp;
-	unsigned char *all_rows;
-	unsigned char *img_rows;
-	int rows_per_proc, num_cols;
-	int kernel_dim = 3;
-	char identity_kernel[9] = {0, 0, 0, 0, 1, 0, 0, 0, 0};
-
-	if (rank == 0) {
-		img = bmp_load(filepath);
-		all_rows = img->data;
-	}
-
-	// TODO: support num rows not multiple of world_size
-	/*
-	rows_per_proc = img->header.height / world_size;
-	if (img->header.height % world_size)
-		fprintf(stderr, "[ERROR] number of rows not divisible by num procs\n");
-	*/
-
-	// TODO send rows per proc and num_cols at the very beggining
-	// Assuming world_size=4 and a 512x512 image
-	rows_per_proc = 128;
-	num_cols = 512;
-
-	img_rows = malloc(rows_per_proc * num_cols);
+unsigned char *propagate_proc_rows(unsigned char *all_rows, int rows_per_proc, int num_cols) {
+	// Allocate space for the rows of a process plus 2 rows from adjacent procs
+	// TODO calculate extra space according to kernel n: 2*(n/2)
+	unsigned char *proc_rows = malloc((rows_per_proc * num_cols) + (2 * num_cols));
 
 	MPI_Scatter(all_rows, rows_per_proc * num_cols,
-				MPI_UNSIGNED_CHAR, img_rows, rows_per_proc * num_cols,
+				MPI_UNSIGNED_CHAR, &proc_rows[num_cols],
+				rows_per_proc * num_cols,
 				MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
+	return proc_rows;
+}
 
+// TODO Support non-3x3 kernels
+void exchange_proc_rows(unsigned char *proc_rows, int rank, int num_procs, int rows_per_proc, int num_cols) {
+	// odd procs send, event procs receive
+	if (rank & 1) {
+		MPI_Send(&proc_rows[num_cols], num_cols,
+				MPI_UNSIGNED_CHAR, rank - 1, 0, MPI_COMM_WORLD);
+
+		if (rank < num_procs - 1)
+			MPI_Send(&proc_rows[rows_per_proc * num_cols], num_cols,
+					MPI_UNSIGNED_CHAR, rank + 1, 0, MPI_COMM_WORLD);
+	} else {
+		if (rank > 0)
+			MPI_Recv(proc_rows, num_cols, MPI_UNSIGNED_CHAR,
+					rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+		if (rank < num_procs - 1)
+			MPI_Recv(&proc_rows[num_cols + (rows_per_proc * num_cols)],
+					num_cols, MPI_UNSIGNED_CHAR, rank + 1,
+					0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
+
+	// even procs send, odd procs receive
+	if (rank & 1) {
+		if (rank > 0)
+			MPI_Recv(proc_rows, num_cols, MPI_UNSIGNED_CHAR,
+					rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+		if (rank < num_procs - 1)
+			MPI_Recv(&proc_rows[num_cols + (rows_per_proc * num_cols)],
+					num_cols, MPI_UNSIGNED_CHAR, rank + 1,
+					0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	} else {
+		MPI_Send(&proc_rows[num_cols], num_cols,
+				MPI_UNSIGNED_CHAR, rank - 1, 0, MPI_COMM_WORLD);
+
+		if (rank < num_procs - 1)
+			MPI_Send(&proc_rows[rows_per_proc * num_cols], num_cols,
+					MPI_UNSIGNED_CHAR, rank + 1, 0, MPI_COMM_WORLD);
+	}
+}
+
+struct bmp_image *convolution(unsigned char *img_rows, int rank, int world_size, int rows_per_proc, int num_cols) {
+	int n = 3;
+	struct bmp_image tmp, *out;
+	char kernel[9] = {0, 0, 0, 0, 1, 0, 0, 0, 0};
+
+	// Compute convolutions
 	tmp.header.width = num_cols;
-	tmp.header.height = rows_per_proc;
+
+	// TODO calculate +1 or +2 times n/2
+	if (rank == 0 || rank == (world_size - 1))
+		tmp.header.height = rows_per_proc + 1;
+	else
+		tmp.header.height = rows_per_proc + 2;
+
 	tmp.header.planes = 1;
 	tmp.header.size = (tmp.header.width * tmp.header.height * tmp.header.planes) + sizeof(struct bmp_header);
 	tmp.data = img_rows;
 
-	out = conv_2d(&tmp, identity_kernel, kernel_dim);
+	out = conv_2d(&tmp, kernel, n);
+	return out;
+}
+
+void process_image(const char *filepath, int rank, int num_procs) {
+	struct bmp_image *img, *out;
+	unsigned char *all_rows, *proc_rows;
+	int rows_per_proc, num_cols;
+
+	if (rank == 0) {
+		img = bmp_load(filepath);
+		all_rows = img->data;
+
+		// TODO: support num rows not multiple of world_size (num_procs)
+		rows_per_proc = img->header.height / num_procs;
+		num_cols = img->header.width;
+	}
+
+	propagate_img_dimensions(&rows_per_proc, &num_cols);
+	printf("%d: rows=%d, cols=%d\n", rank, rows_per_proc, num_cols);
+	proc_rows = propagate_proc_rows(all_rows, rows_per_proc, num_cols);
+	exchange_proc_rows(proc_rows, rank, num_procs, rows_per_proc, num_cols);
+	out = convolution(proc_rows, rank, num_procs, rows_per_proc, num_cols);
+
+	// Aggregate results
+	//MPI_Gather()
 
 	if (rank == 0)
 		bmp_describe(out);
 
 	free(out);
-	free(img_rows);
+	free(proc_rows);
 	if (rank == 0)
 		bmp_destroy(img);
-}
-
-void run_worker() {
-
 }
 
 int main(int argc, char *argv[]) {
@@ -88,15 +133,8 @@ int main(int argc, char *argv[]) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-	run_dispatcher(argv[1], rank, world_size);
-/*
-	if (rank == 0) {
-    	run_dispatcher();
-  	} else {
-		run_worker();
-	}
-*/
+	process_image(argv[1], rank, world_size);
+
 	MPI_Barrier(MPI_COMM_WORLD);
   	MPI_Finalize();
-
 }
