@@ -59,12 +59,10 @@ void bmp_destroy(struct bmp_image *img);
 
 void raw_destroy(struct raw_image *raw);
 
-struct bmp_image *raw2bmp(struct raw_image *raw);
+struct bmp_image *raw_to_bmp(struct raw_image *raw);
 
-struct raw_image *bmp2raw(struct bmp_image *bmp);
+struct raw_image *bmp_to_raw(struct bmp_image *bmp, int padding);
 
 struct raw_image *raw_create(int width, int height, int nchannels);
-
-struct raw_image *bmp2raw_padded(struct bmp_image *bmp, int padding);
 
 #endif

@@ -183,7 +183,7 @@ void raw_destroy(struct raw_image *raw) {
     free(raw);
 }
 
-struct bmp_image *raw2bmp(struct raw_image *raw) {
+struct bmp_image *raw_to_bmp(struct raw_image *raw) {
     int row, col, row_padding;
     int raw_offset, bmp_offset;
     struct bmp_image *bmp = bmp_create(raw->width, raw->height, raw->nchannels);
@@ -205,7 +205,7 @@ struct bmp_image *raw2bmp(struct raw_image *raw) {
     return bmp;
 }
 
-struct raw_image *bmp2raw(struct bmp_image *bmp, int padding) {
+struct raw_image *bmp_to_raw(struct bmp_image *bmp, int padding) {
     int row, col;
     struct raw_image *raw;
     int raw_offset, padded_offset, bmp_offset;

@@ -27,8 +27,8 @@ void copy_file_with_raw(const char *src, const char *dst) {
 	struct raw_image *raw;
 
 	bmp1 = bmp_load(src);
-	raw = bmp2raw(bmp1);
-	bmp2 = raw2bmp(raw);
+	raw = bmp_to_raw(bmp1, 0);
+	bmp2 = raw_to_bmp(raw);
 
 	bmp_describe(bmp2);
 	bmp_save(bmp2, dst);
@@ -44,8 +44,8 @@ void copy_file_with_padding(const char *src, const char *dst) {
 	struct raw_image *raw;
 
 	bmp1 = bmp_load(src);
-	raw = bmp2raw_padded(bmp1, 1);
-	bmp2 = raw2bmp(raw);
+	raw = bmp_to_raw(bmp1, 1);
+	bmp2 = raw_to_bmp(raw);
 
 	bmp_describe(bmp2);
 	bmp_save(bmp2, dst);
@@ -78,10 +78,10 @@ void conv(const char *src, const char *dst) {
 	printf("conv: Describing original image:\n");
 	bmp_describe(img);
 
-	rin = bmp2raw(img);
+	rin = bmp_to_raw(img, 0);
 	rout = conv_2d_raw(rin, identity, n);
 
-	out = raw2bmp(rout);
+	out = raw_to_bmp(rout);
 	bmp_save(out, dst);
 
 	printf("conv: Describing convolved image:\n");
@@ -103,10 +103,10 @@ void conv_padded(const char *src, const char *dst) {
 	printf("conv: Describing original image:\n");
 	bmp_describe(img);
 
-	rin = bmp2raw_padded(img, 1);
+	rin = bmp_to_raw(img, 1);
 	rout = conv_2d_raw(rin, identity, n);
 
-	out = raw2bmp(rout);
+	out = raw_to_bmp(rout);
 	bmp_save(out, dst);
 
 	printf("conv: Describing convolved image:\n");

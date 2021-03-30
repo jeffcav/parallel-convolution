@@ -14,9 +14,9 @@ void conv(const char *src, const char *dst) {
 	struct raw_image *rin, *rout;
 
 	img = bmp_load(src);
-	rin = bmp2raw(img);
+	rin = bmp_to_raw(img, 0);
 	rout = conv_2d_raw(rin, identity, n);
-	out = raw2bmp(rout);
+	out = raw_to_bmp(rout);
 	bmp_save(out, dst);
 
 	bmp_destroy(img);
