@@ -1,6 +1,6 @@
 LIBFILES = src/conv.c src/bmp.c
 
-all: prepare test serial inspect
+all: prepare test serial inspect parallel-mpi
 
 prepare:
 	mkdir build
@@ -15,11 +15,11 @@ inspect:
 test:
 	gcc -Wall $(LIBFILES) src/test.c -o build/test
 
-parallel:
-	# mpicc src/conv.c -o build/conv
+parallel-mpi:
+	mpicc -Wall $(LIBFILES) src/parallel-mpi.c -o build/parallel-mpi
 
-run:
-	# mpiexec build/conv 2
+run-parallel-mpi:
+	mpirun -n 4 ./build/parallel-mpi images/lena.bmp
 
 run-serial:
 	./build/serial
