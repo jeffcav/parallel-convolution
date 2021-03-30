@@ -13,11 +13,11 @@ int main(int argc, char *argv[]) {
 	}
 
 	src_file = argv[1];
-	bmp_load(src_file);
+	img = bmp_load(src_file);
 
-	printf("-- %s --\n", src_file);
+	printf("-- begin of %s --\n", src_file);
 	bmp_describe(img);
-
+	printf("-- end of %s --\n\n", src_file);
 	bmp_destroy(img);
 	return 0;
 }
