@@ -65,4 +65,6 @@ struct raw_image *bmp2raw(struct bmp_image *bmp);
 
 struct raw_image *raw_create(int width, int height, int nchannels);
 
+struct raw_image *bmp2raw_padded(struct bmp_image *bmp, int padding);
+
 #endif

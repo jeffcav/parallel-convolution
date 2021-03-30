@@ -21,12 +21,17 @@ void bmp_describe(const struct bmp_image *img) {
 }
 
 int bmp_configure_header(struct bmp_image *img, int width, int height, int nchannels) {
-    int padding, file_size;
+    int file_padding, file_size, row_padding;
 
     file_size = (width * height * nchannels) + sizeof(struct bmp_header) + sizeof(img->table);
-    padding = (file_size & 0x3);
-    if (padding)
-        file_size += padding;
+
+    row_padding = (width & 0x3);
+    if (row_padding)
+        file_size += (height * row_padding);
+
+    file_padding = (file_size & 0x3);
+    if (file_padding)
+        file_size += file_padding;
 
     img->header.type = 0x4d42;
     img->header.size = file_size;
@@ -43,7 +48,7 @@ int bmp_configure_header(struct bmp_image *img, int width, int height, int nchan
     img->header.num_colors = 0;
     img->header.important_colors = 0;
 
-    return padding;
+    return file_padding;
 }
 
 // TODO use a .h file with an array containing the color table
@@ -67,11 +72,13 @@ int bmp_configure_color_table(struct bmp_image *img) {
 }
 
 struct bmp_image *bmp_create(int width, int height, int nchannels) {
-    int padding;
+    int file_padding, row_padding;
     struct bmp_image *img = calloc(sizeof(struct bmp_image), 1);
 
-    padding = bmp_configure_header(img, width, height, nchannels);
-    img->data = malloc((width * height * nchannels) + padding);
+    file_padding = bmp_configure_header(img, width, height, nchannels);
+    row_padding = width & 0x3;
+
+    img->data = malloc((width * height * nchannels) + (height * row_padding) + file_padding);
     if (bmp_configure_color_table(img)) {
         bmp_destroy(img);
         return NULL;
@@ -83,7 +90,7 @@ struct bmp_image *bmp_create(int width, int height, int nchannels) {
 struct raw_image *raw_create(int width, int height, int nchannels) {
     struct raw_image *img = calloc(sizeof(struct raw_image), 1);
 
-    img->data = malloc(width * height * nchannels);
+    img->data = calloc(width * height * nchannels, 1);
     img->width = width;
     img->height = height;
     img->nchannels = nchannels;
@@ -177,16 +184,18 @@ void raw_destroy(struct raw_image *raw) {
 }
 
 struct bmp_image *raw2bmp(struct raw_image *raw) {
-    int row, col;
+    int row, col, row_padding;
     int raw_offset, bmp_offset;
     struct bmp_image *bmp = bmp_create(raw->width, raw->height, raw->nchannels);
 
     if (bmp == NULL)
         return NULL;
 
+    row_padding = raw->width & 0x3;
+
     for (row = 0; row < raw->height; row++) {
         raw_offset = (row * raw->width);
-        bmp_offset = ((raw->height-1) * raw->width) - raw_offset;
+        bmp_offset = ((raw->height-1) * (raw->width + row_padding)) - (row * (raw->width+row_padding));
 
         for (col = 0; col < raw->width; col++) {
             bmp->data[bmp_offset+col] = raw->data[raw_offset+col];
@@ -196,24 +205,24 @@ struct bmp_image *raw2bmp(struct raw_image *raw) {
     return bmp;
 }
 
-struct raw_image *bmp2raw(struct bmp_image *bmp) {
+struct raw_image *bmp2raw(struct bmp_image *bmp, int padding) {
     int row, col;
-    int raw_offset, bmp_offset;
-    struct raw_image *raw = malloc(sizeof(struct raw_image));
+    struct raw_image *raw;
+    int raw_offset, padded_offset, bmp_offset;
 
-    raw->width = bmp->header.width;
-    raw->height = bmp->header.height;
-    raw->nchannels = bmp->header.planes;
+    raw = raw_create(bmp->header.width + (2*padding),
+                     bmp->header.height + (2*padding),
+                     bmp->header.planes);
 
-    raw->data = malloc(raw->width * raw->height * raw->nchannels);
+    padded_offset = (padding * raw->width) + padding;
+    for (row = 0; row < bmp->header.height; row++) {
+        raw_offset = (row * bmp->header.width);
+        bmp_offset = ((bmp->header.height-1) * bmp->header.width) - raw_offset;
 
-    for (row = 0; row < raw->height; row++) {
-        raw_offset = (row * raw->width);
-        bmp_offset = ((raw->height-1) * raw->width) - raw_offset;
-
-        for (col = 0; col < raw->width; col++) {
-            raw->data[raw_offset + col] = bmp->data[bmp_offset + col];
+        for (col = 0; col < bmp->header.width; col++) {
+            raw->data[padded_offset + col] = bmp->data[bmp_offset + col];
         }
+        padded_offset += raw->width;
     }
 
     return raw;

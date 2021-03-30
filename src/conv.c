@@ -24,14 +24,15 @@ static char conv2D_region(struct bmp_image *img, int offset, char *kernel, int n
  * @brief Apply a nxn filter to a nxn region of an image.
  */
 static char conv2D_region_raw(struct raw_image *img, int offset, char *kernel, int n) {
-	int i, j;
+	int i, j, k_offset = 0;
 	unsigned char acc = 0;
 
 	for (i = 0; i < n; i++) {
 		for (j = 0; j < n; j++) {
-			acc += (img->data[offset + j] * kernel[(i*n)+j]);
+			acc += (img->data[offset + j] * kernel[k_offset + j]);
 		}
 		offset += img->width;
+		k_offset += n;
 	}
 
 	return acc;
@@ -63,23 +64,25 @@ struct bmp_image *conv_2d(struct bmp_image *img, char *kernel, int n) {
 	return out;
 }
 
-struct raw_image *conv_2d_raw(struct raw_image *img, char *kernel, int n) {
+struct raw_image *conv_2d_raw(struct raw_image *in, char *kernel, int n) {
 	int row, col;
 	struct raw_image *out;
+	int in_offset, out_offset;
 
-	out = raw_create(img->width - (2 * (n/2)),
-					 img->height - (2 * (n/2)),
-					 img->nchannels);
+	out = raw_create(in->width - (2 * (n/2)),
+					 in->height - (2 * (n/2)),
+					 in->nchannels);
+
+	in_offset = 0;
+	out_offset = 0;
 
 	for (row = 0; row < out->height; row++) {
 		for (col = 0; col < out->width; col++) {
-			int in_offset, out_offset;
-
-			in_offset = (row * img->width) + col;
-			out_offset = (row * out->width) + col;
-
-			out->data[out_offset] = conv2D_region_raw(img, in_offset, kernel, n);
+			out->data[out_offset + col] = conv2D_region_raw(in, in_offset + col, kernel, n);
 		}
+
+		in_offset += in->width;
+		out_offset += out->width;
 	}
 
 	return out;
