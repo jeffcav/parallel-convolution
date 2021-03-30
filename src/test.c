@@ -2,10 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "include/conv.h"
-#include "include/bmp.h"
+#include "include/image.h"
 
 #define SRCFILE "images/lena.bmp"
 #define COPYFILE "images/out/test_lena_copy.bmp"
+#define COPYRAWFILE "images/out/test_lena_copy_raw.bmp"
 #define CONVFILE "images/out/test_lena_conv.bmp"
 #define LINESFILE "images/out/test_lena_lines.bmp"
 
@@ -16,6 +17,23 @@ void copy_file(const char *src, const char *dst) {
 	bmp_describe(img);
 	bmp_save(img, dst);
 	bmp_destroy(img);
+
+}
+
+void copy_file_with_raw(const char *src, const char *dst) {
+	struct bmp_image *bmp1, *bmp2;
+	struct raw_image *raw;
+
+	bmp1 = bmp_load(src);
+	raw = bmp2raw(bmp1);
+	bmp2 = raw2bmp(raw);
+
+	bmp_describe(bmp2);
+	bmp_save(bmp2, dst);
+
+	bmp_destroy(bmp1);
+	bmp_destroy(bmp2);
+	//raw_destroy(raw);
 
 }
 
@@ -49,6 +67,7 @@ void conv(const char *src, const char *dst) {
 
 int main(int argc, char *argv[]) {
 	copy_file(SRCFILE, COPYFILE);
+	copy_file_with_raw(SRCFILE, COPYRAWFILE);
 	conv(SRCFILE, CONVFILE);
 	draw_black_lines(SRCFILE, LINESFILE, 10);
 

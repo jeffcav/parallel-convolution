@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "include/conv.h"
-#include "include/bmp.h"
+#include "include/image.h"
 
 int main(int argc, char *argv[]) {
 	struct bmp_image *img;

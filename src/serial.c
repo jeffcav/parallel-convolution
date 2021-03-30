@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "include/conv.h"
-#include "include/bmp.h"
+#include "include/image.h"
 
 #define SRCFILE "images/lena.bmp"
 #define DSTFILE "images/out/serial_lena_conv.bmp"

@@ -1,6 +1,6 @@
-LIBFILES = src/conv.c src/bmp.c
+LIBFILES = src/conv.c src/image.c
 
-all: prepare test serial inspect parallel-mpi
+all: prepare test serial inspect parallel-mpi color-table
 
 prepare:
 	mkdir build
@@ -11,6 +11,9 @@ serial:
 
 inspect:
 	gcc -Wall $(LIBFILES) src/inspect.c -o build/inspect
+
+color-table:
+	gcc -Wall $(LIBFILES) src/color-table.c -o build/color-table
 
 test:
 	gcc -Wall $(LIBFILES) src/test.c -o build/test
@@ -23,6 +26,9 @@ run-parallel-mpi:
 
 run-serial:
 	./build/serial
+
+run-color-table:
+	./build/color-table images/lena.bmp resources/color-table.bin
 
 run-test:
 	./build/test

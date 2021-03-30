@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "include/bmp.h"
+#include "include/image.h"
 #include "include/conv.h"
 
 /**
