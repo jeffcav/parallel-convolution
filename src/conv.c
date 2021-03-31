@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "include/image.h"
@@ -55,11 +56,12 @@ struct raw_image *conv_2d_parallel(struct raw_image *in, const char *kernel, int
 					 in->nchannels);
 
 
+	//omp_set_num_threads(2);
+	#pragma omp parallel for private(in_offset, out_offset) shared(in, out)
 	for (row = 0; row < out->height; row++) {
 		in_offset = row * in->width;
 		out_offset = row * out->width;
 
-		#pragma omp parallel for
 		for (col = 0; col < out->width; col++) {
 			out->data[out_offset + col] = conv2D_region(in, in_offset + col, kernel, n);
 		}
