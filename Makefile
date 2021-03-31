@@ -1,6 +1,6 @@
 LIBFILES = src/conv.c src/image.c
 
-all: prepare test serial inspect parallel-mpi color-table imgc parallel-mpi-omp
+all: prepare test serial inspect parallel-mpi color-table imgc parallel-mpi-omp parallel-omp
 
 prepare:
 	mkdir build
@@ -23,6 +23,9 @@ test:
 
 parallel-mpi:
 	mpicc -Wall $(LIBFILES) src/parallel-mpi.c -o build/parallel-mpi -fopenmp
+
+parallel-omp:
+	mpicc -Wall $(LIBFILES) src/parallel-omp.c -o build/parallel-omp -fopenmp
 
 parallel-mpi-omp:
 	mpicc -Wall $(LIBFILES) src/parallel-mpi-omp.c -o build/parallel-mpi-omp -lm -fopenmp

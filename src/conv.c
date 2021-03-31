@@ -57,13 +57,18 @@ struct raw_image *conv_2d_parallel(struct raw_image *in, char *kernel, int n) {
 	in_offset = 0;
 	out_offset = 0;
 
-	#pragma omp parallel for
+
 	for (row = 0; row < out->height; row++) {
+		in_offset = row * in->width;
+		out_offset = row * out->width;
+
+		#pragma omp parallel for
 		for (col = 0; col < out->width; col++) {
 			out->data[out_offset + col] = conv2D_region(in, in_offset + col, kernel, n);
 		}
-		in_offset += in->width;
-		out_offset += out->width;
+
+		//in_offset += in->width;
+		//out_offset += out->width;
 	}
 
 	return out;
