@@ -4,9 +4,6 @@
 #include "include/conv.h"
 #include "include/image.h"
 
-#define SRCFILE "images/lena.bmp"
-#define DSTFILE "images/out/serial_lena_conv.bmp"
-
 void conv(const char *src, const char *dst) {
 	char identity[9] = {0, 0, 0, 0, 1, 0, 0, 0, 0};
 	int n = 3;
@@ -26,5 +23,9 @@ void conv(const char *src, const char *dst) {
 }
 
 int main(int argc, char *argv[]) {
-	conv(SRCFILE, DSTFILE);
+	if (argc != 3) {
+		printf("Usage: serial src_file.bmp dst_file.bmp");
+	}
+
+	conv(argv[1], argv[2]);
 }

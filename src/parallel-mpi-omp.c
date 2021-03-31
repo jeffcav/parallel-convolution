@@ -95,7 +95,7 @@ struct raw_image * get_input_image(const char *filepath) {
 	return src_raw;
 }
 
-void process_image(const char *filepath, int rank, int num_procs) {
+void process_image(const char *filepath, const char *out_filepath, int rank, int num_procs) {
 	int n = 3;
 	int num_cols, rows_per_proc;
 	unsigned char *my_rows = NULL;
@@ -123,7 +123,7 @@ void process_image(const char *filepath, int rank, int num_procs) {
 	exchange_adjacent_rows(my_rows, rank, num_procs, rows_per_proc, num_cols, 1);
 
 	my_result = convolution2D(my_rows, rank, num_procs, rows_per_proc, num_cols);
-	save_intermediate_results(my_result, rank);
+	//save_intermediate_results(my_result, rank);
 
 	final_rows = gather(my_result, rank, num_procs);
 
@@ -131,7 +131,7 @@ void process_image(const char *filepath, int rank, int num_procs) {
 		final_image = raw_create_empty(num_cols, num_procs * rows_per_proc - 1, 1);
 		final_image->data = &final_rows[num_cols];
 		dst_bmp = raw_to_bmp(final_image);
-		bmp_save(dst_bmp, "result.bmp");
+		bmp_save(dst_bmp, out_filepath);
 		bmp_destroy(dst_bmp);
 
 		raw_destroy(image);
@@ -141,8 +141,8 @@ void process_image(const char *filepath, int rank, int num_procs) {
 int main(int argc, char *argv[]) {
 	int nprocs, rank;
 
-	if (argc != 2) {
-    	fprintf(stderr, "Usage: parallel-mpi image.bmp\n");
+	if (argc != 3) {
+    	fprintf(stderr, "Usage: parallel-mpi-omp image.bmp output.bmp\n");
     	exit(1);
   	}
 
@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-	process_image(argv[1], rank, nprocs);
+	process_image(argv[1], argv[2], rank, nprocs);
 
 	MPI_Barrier(MPI_COMM_WORLD);
   	MPI_Finalize();
