@@ -21,7 +21,13 @@ test:
 parallel-mpi:
 	mpicc -Wall $(LIBFILES) src/parallel-mpi.c -o build/parallel-mpi
 
+parallel-mpi-omp:
+	mpicc -Wall $(LIBFILES) src/parallel-mpi.c -o build/parallel-mpi -lm -fopenmp
+
 run-parallel-mpi:
+	mpirun -n 4 ./build/parallel-mpi images/lena.bmp
+
+run-parallel-mpi-omp:
 	mpirun -n 4 ./build/parallel-mpi images/lena.bmp
 
 run-serial:
