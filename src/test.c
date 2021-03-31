@@ -79,7 +79,7 @@ void conv(const char *src, const char *dst) {
 	bmp_describe(img);
 
 	rin = bmp_to_raw(img, 0);
-	rout = conv_2d_raw(rin, identity, n);
+	rout = conv_2d(rin, identity, n);
 
 	out = raw_to_bmp(rout);
 	bmp_save(out, dst);
@@ -104,7 +104,7 @@ void conv_padded(const char *src, const char *dst) {
 	bmp_describe(img);
 
 	rin = bmp_to_raw(img, 1);
-	rout = conv_2d_raw(rin, identity, n);
+	rout = conv_2d(rin, identity, n);
 
 	out = raw_to_bmp(rout);
 	bmp_save(out, dst);

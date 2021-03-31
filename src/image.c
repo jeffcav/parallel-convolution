@@ -87,13 +87,36 @@ struct bmp_image *bmp_create(int width, int height, int nchannels) {
     return img;
 }
 
-struct raw_image *raw_create(int width, int height, int nchannels) {
-    struct raw_image *img = calloc(sizeof(struct raw_image), 1);
+struct raw_image *raw_create_empty(int width, int height, int nchannels) {
+    struct raw_image *img;
 
-    img->data = calloc(width * height * nchannels, 1);
+    img = malloc(sizeof(struct raw_image));
+    if (!img) {
+        printf("[ERROR] could not allocate empty raw image");
+        return NULL;
+    }
+
     img->width = width;
     img->height = height;
     img->nchannels = nchannels;
+
+    return img;
+}
+
+struct raw_image *raw_create(int width, int height, int nchannels) {
+    struct raw_image *img = raw_create_empty(width, height, nchannels);
+
+    if (!img) {
+        printf("[ERROR] could not allocate raw image.\n");
+        return NULL;
+    }
+
+    img->data = calloc(width * height * nchannels, 1);
+    if (!img->data) {
+        printf("[ERROR] could not allocate data for raw image.\n");
+        free(img);
+        return NULL;
+    }
 
     return img;
 }
