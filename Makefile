@@ -30,15 +30,6 @@ parallel-omp:
 parallel-mpi-omp:
 	mpicc -Wall $(LIBFILES) src/parallel-mpi-omp.c -o build/parallel-mpi-omp -lm -fopenmp
 
-run-parallel-mpi:
-	mpirun -n 4 ./build/parallel-mpi images/lena.bmp
-
-run-parallel-mpi-omp:
-	mpirun -n 4 ./build/parallel-mpi images/lena.bmp
-
-run-serial:
-	./build/serial images/lena.bmp images/out/serial_lena.bmp
-
 run-color-table:
 	./build/color-table images/lena.bmp resources/color-table.bin
 

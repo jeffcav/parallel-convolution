@@ -6,7 +6,7 @@
 /**
  * @brief Apply a nxn filter to a nxn region of an image.
  */
-static char conv2D_region(struct raw_image *img, int offset, char *kernel, int n) {
+static char conv2D_region(struct raw_image *img, int offset, const char *kernel, int n) {
 	int i, j, k_offset = 0;
 	unsigned char acc = 0;
 
@@ -21,7 +21,7 @@ static char conv2D_region(struct raw_image *img, int offset, char *kernel, int n
 	return acc;
 }
 
-struct raw_image *conv_2d(struct raw_image *in, char *kernel, int n) {
+struct raw_image *conv_2d(struct raw_image *in, const char *kernel, int n) {
 	int row, col;
 	struct raw_image *out;
 	int in_offset, out_offset;
@@ -45,7 +45,7 @@ struct raw_image *conv_2d(struct raw_image *in, char *kernel, int n) {
 	return out;
 }
 
-struct raw_image *conv_2d_parallel(struct raw_image *in, char *kernel, int n) {
+struct raw_image *conv_2d_parallel(struct raw_image *in, const char *kernel, int n) {
 	int row, col;
 	struct raw_image *out;
 	int in_offset, out_offset;
@@ -53,9 +53,6 @@ struct raw_image *conv_2d_parallel(struct raw_image *in, char *kernel, int n) {
 	out = raw_create(in->width - (2 * (n/2)),
 					 in->height - (2 * (n/2)),
 					 in->nchannels);
-
-	in_offset = 0;
-	out_offset = 0;
 
 
 	for (row = 0; row < out->height; row++) {
@@ -66,9 +63,6 @@ struct raw_image *conv_2d_parallel(struct raw_image *in, char *kernel, int n) {
 		for (col = 0; col < out->width; col++) {
 			out->data[out_offset + col] = conv2D_region(in, in_offset + col, kernel, n);
 		}
-
-		//in_offset += in->width;
-		//out_offset += out->width;
 	}
 
 	return out;

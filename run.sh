@@ -33,7 +33,7 @@ function mpiomp() {
 	echo "mpi-omp"
 	for p in 2 4 8; do
 		echo ""
-		for i in 512 1024 2048 4096 16384 32768; do
+		for i in 512 1024 2048 4096 8192 16384 32768; do
 			echo -ne "${i} ${p} "; time mpirun -n $p ./build/parallel-mpi-omp images/${i}x${i}.bmp images/out/mpiomp_${i}x${i}.bmp
 		done
 	done

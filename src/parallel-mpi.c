@@ -4,13 +4,14 @@
 #include <string.h>
 #include "include/conv.h"
 #include "include/image.h"
+#include "include/kernel.h"
 
 void propagate_img_dimensions(int *rows_per_proc, int *num_cols) {
 	MPI_Bcast(rows_per_proc, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Bcast(num_cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
-unsigned char *scatter(unsigned char *all_rows, int rows_per_proc, int num_cols, int kernel_dim) {
+unsigned char *scatter(unsigned char *all_rows, int rows_per_proc, int num_cols) {
 	int num_rows;
 	unsigned char *proc_rows;
 
@@ -53,14 +54,12 @@ void exchange_adjacent_rows(unsigned char *proc_rows, int rank, int num_procs, i
 }
 
 struct raw_image *convolution2D(unsigned char *img_rows, int rank, int world_size, int rows_per_proc, int num_cols) {
-	int n = 3;
-	char kernel[9] = {0, 0, 0, 0, 1, 0, 0, 0, 0};
 	struct raw_image *in, *out;
 
-	in = raw_create_empty(num_cols, rows_per_proc + (2*(n/2)), 1);
+	in = raw_create_empty(num_cols, rows_per_proc + (2*(kernel_dim/2)), 1);
 	in->data = img_rows;
 
-	out = conv_2d(in, kernel, n);
+	out = conv_2d(in, kernel, kernel_dim);
 	return out;
 }
 
@@ -95,8 +94,7 @@ struct raw_image * get_input_image(const char *filepath) {
 	return src_raw;
 }
 
-void process_image(const char *filepath, const char *out_filepath, int rank, int num_procs) {
-	int n = 3;
+void process_image(const char *filepath, const char *out_filepath, int verbose, int rank, int num_procs) {
 	int num_cols, rows_per_proc;
 	unsigned char *my_rows = NULL;
 	unsigned char *all_rows = NULL;
@@ -117,13 +115,14 @@ void process_image(const char *filepath, const char *out_filepath, int rank, int
 
 	propagate_img_dimensions(&rows_per_proc, &num_cols);
 
-	my_rows = scatter(all_rows, rows_per_proc, num_cols, n);
+	my_rows = scatter(all_rows, rows_per_proc, num_cols);
 
 	exchange_adjacent_rows(my_rows, rank, num_procs, rows_per_proc, num_cols, 0);
 	exchange_adjacent_rows(my_rows, rank, num_procs, rows_per_proc, num_cols, 1);
 
 	my_result = convolution2D(my_rows, rank, num_procs, rows_per_proc, num_cols);
-	//save_intermediate_results(my_result, rank);
+	if (verbose)
+		save_intermediate_results(my_result, rank);
 
 	final_rows = gather(my_result, rank, num_procs);
 
@@ -141,7 +140,7 @@ void process_image(const char *filepath, const char *out_filepath, int rank, int
 int main(int argc, char *argv[]) {
 	int nprocs, rank;
 
-	if (argc != 3) {
+	if (argc < 3) {
     	fprintf(stderr, "Usage: parallel-mpi input.bmp output.bmp\n");
     	exit(1);
   	}
@@ -150,7 +149,7 @@ int main(int argc, char *argv[]) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-	process_image(argv[1], argv[2], rank, nprocs);
+	process_image(argv[1], argv[2], argc>3, rank, nprocs);
 
 	MPI_Barrier(MPI_COMM_WORLD);
   	MPI_Finalize();
