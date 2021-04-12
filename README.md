@@ -13,24 +13,30 @@ https://docs.google.com/spreadsheets/d/14RXUATwGfS6NzDjerQxIyk-99d9u-4Vin8MdKZ8S
 The result should be as below:
 
 **Original image:**
+
 ![lena](images/lena.bmp)
 
 **Processed image:**
+
 ![lena](resources/lena_embossed.bmp)
 
 When running the parallel version, each process will generate part of the final result, as shown below for 4 processes:
 
 
 **Process 0:**
+
 ![lena](resources/rank_0.bmp)
 
 **Process 1:**
+
 ![lena](resources/rank_1.bmp)
 
 **Process 2:**
+
 ![lena](resources/rank_2.bmp)
 
 **Process 3:**
+
 ![lena](resources/rank_3.bmp)
 
 ## How it works
@@ -42,22 +48,28 @@ To compile, run `make all`
 
 ### Run in serial
 To run the serial version on an example image, run:
+
 `./build/serial images/lena.bmp lena_serial.bmp`
 
 ### Run in parallel with MPI
 
 To run a parallel version of the algorithm using MPI with 4 processes, run:
+
 `mpirun -n 4 ./build/parallel-mpi images/lena.bmp lena_mpi.bmp`
 
 To make each process output its partial result, use `verbose` as shown below:
+
 `mpirun -n 4 ./build/parallel-mpi images/lena.bmp lena_mpi.bmp verbose`
 
 ### Run in parallel with MPI and OpenMP
 To run a parallel version of the algorithm using MPI an OpenMP with 4 processes, run:
+
 `mpirun -n 4 ./build/parallel-mpiomp images/lena.bmp lena_mpi_omp.bmp`
+
 
 ### Generate random images
 To generate random images with noise for testing purposes, run `./make-images.sh`
+
 
 ### Run experiments
 To run experiments and print average time spent processing images generated in the step above, run `fire` scripts:
